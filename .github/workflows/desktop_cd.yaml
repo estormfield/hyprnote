@@ -1,5 +1,13 @@
 # https://docs.crabnebula.dev/cloud/ci/tauri-v2-workflow/
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - apps/desktop/**
+      - packages/ui/**
+      - plugins/**
+      - .github/workflows/desktop_cd.yaml
   workflow_dispatch:
     inputs:
       runner:
@@ -17,7 +25,7 @@ env:
   TAURI_CONF_PATH: ./src-tauri/tauri.conf.json
 jobs:
   build:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     permissions:
       contents: write
     strategy:
@@ -81,14 +89,17 @@ jobs:
           elif [[ -d "target/${{ matrix.target }}/debug" ]]; then
             find target/${{ matrix.target }}/debug -type f -not -path "*/\.*" -exec cp {} target/release/ \;
           fi
+      - name: Show produced bundles
+        shell: bash
+        working-directory: ./apps/desktop/src-tauri
+        run: |
+          echo "Listing bundle outputs under target/${{ matrix.target }}:"
+          find target/${{ matrix.target }} -type f -path "*/bundle/*" -print || true
       - uses: actions/upload-artifact@v4
         with:
-          name: hyprnote-desktop-dmg-${{ matrix.target }}
+          name: hyprnote-dev-${{ matrix.target }}
           path: |
-            apps/desktop/src-tauri/target/release/*.dmg
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            apps/desktop/src-tauri/target/${{ matrix.target }}/debug/bundle/dmg/*.dmg
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
-            apps/desktop/src-tauri/target/${{ matrix.target }}/debug/bundle/macos/*.app
-          if-no-files-found: warn
+            apps/desktop/src-tauri/target/${{ matrix.target }}/**/bundle/dmg/*.dmg
+            apps/desktop/src-tauri/target/${{ matrix.target }}/**/bundle/macos/*.app
+          if-no-files-found: error
           retention-days: 14
