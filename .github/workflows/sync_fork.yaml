@@ -1,0 +1,56 @@
+name: Sync Fork
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to sync
+        required: false
+        default: main
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: detect
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          branch="${{ github.event.inputs.branch || 'main' }}"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          upstream_nwo=$(gh repo view "$GITHUB_REPOSITORY" --json isFork,parent -q 'if .isFork then .parent.nameWithOwner else "" end')
+          if [ -z "$upstream_nwo" ]; then
+            echo "is_fork=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_fork=true" >> "$GITHUB_OUTPUT"
+            echo "upstream=https://github.com/${upstream_nwo}.git" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.detect.outputs.is_fork == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git remote add upstream "${{ steps.detect.outputs.upstream }}" || git remote set-url upstream "${{ steps.detect.outputs.upstream }}"
+          git fetch origin "${{ steps.detect.outputs.branch }}"
+          git fetch upstream "${{ steps.detect.outputs.branch }}"
+          git checkout -B "${{ steps.detect.outputs.branch }}" "origin/${{ steps.detect.outputs.branch }}"
+          if git merge --ff-only "upstream/${{ steps.detect.outputs.branch }}"; then
+            git push origin "HEAD:${{ steps.detect.outputs.branch }}"
+            echo "Synced"
+          else
+            echo "Diverged; manual resolution required" >&2
+            exit 1
+          fi
+      - if: steps.detect.outputs.is_fork != 'true'
+        run: echo "Not a fork; nothing to sync"
+
+
