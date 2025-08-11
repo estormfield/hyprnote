@@ -7,6 +7,7 @@ permissions:
 
 jobs:
   auto-release-stable:
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
