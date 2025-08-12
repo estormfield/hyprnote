@@ -3,12 +3,50 @@
   "productName": "Hyprnote",
   "mainBinaryName": "Hyprnote",
   "identifier": "com.hyprnote.stable",
+  "build": {
+    "beforeBuildCommand": "pnpm -F desktop build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "publisher": "Fastrepl",
+    "active": true,
+    "createUpdaterArtifacts": false,
+    "targets": "all",
+    "icon": [
+      "icons/stable/32x32.png",
+      "icons/stable/128x128.png",
+      "icons/stable/128x128@2x.png",
+      "icons/stable/icon.icns",
+      "icons/stable/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "14.2",
+      "entitlements": "./Entitlements.plist",
+      "dmg": {
+        "background": "assets/dmg-background-stable.png",
+        "windowSize": { "width": 660, "height": 430 },
+        "appPosition": { "x": 177, "y": 200 },
+        "applicationFolderPosition": { "x": 483, "y": 200 }
+      }
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "offlineInstaller" },
+      "wix": {
+        "language": { "en-US": { "localePath": "./windows/locales/en-US.wxl" } },
+        "fragmentPaths": ["./windows/fragments/registry.wxs"],
+        "componentRefs": ["HyprnoteRegistryEntries"]
+      }
+    }
+  },
   "plugins": {
     "updater": {
-      "active": true,
-      "endpoints": [
-        "https://desktop.hyprnote.com/update/{{target}}-{{arch}}/{{current_version}}?channel=stable"
-      ]
+      "active": false
     }
   }
 }

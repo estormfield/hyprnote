@@ -53,7 +53,9 @@ pub async fn main() {
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.plugin(tauri_nspanel::init());
+        if std::env::var("HYPR_DISABLE_NSPANEL").ok().as_deref() != Some("1") {
+            builder = builder.plugin(tauri_nspanel::init());
+        }
     }
 
     builder = builder
@@ -96,15 +98,14 @@ pub async fn main() {
         ));
 
     {
-        // These are not secrets. In prod, we set different values in the environment. (See .github/workflows/desktop_cd.yml)
-        let (keygen_account_id, keygen_verify_key) = (
-            option_env!("KEYGEN_ACCOUNT_ID").unwrap_or(""),
-            option_env!("KEYGEN_VERIFY_KEY").unwrap_or(""),
-        );
+        // Only enable keygen plugin when both env vars are present
+        let keygen_account_id = option_env!("KEYGEN_ACCOUNT_ID");
+        let keygen_verify_key = option_env!("KEYGEN_VERIFY_KEY");
 
-        builder = builder.plugin(
-            tauri_plugin_keygen::Builder::new(keygen_account_id, keygen_verify_key).build(),
-        );
+        if let (Some(account_id), Some(verify_key)) = (keygen_account_id, keygen_verify_key) {
+            builder = builder
+                .plugin(tauri_plugin_keygen::Builder::new(account_id, verify_key).build());
+        }
     }
 
     #[cfg(target_os = "macos")]

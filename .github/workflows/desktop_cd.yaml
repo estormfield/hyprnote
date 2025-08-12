@@ -22,7 +22,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 env:
-  TAURI_CONF_PATH: ./src-tauri/tauri.conf.json
+  TAURI_CONF_PATH: ./src-tauri/tauri.conf.stable.json
 jobs:
   build:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
@@ -72,12 +72,16 @@ jobs:
       - run: poetry run python scripts/pre_build.py
       - run: pnpm -F desktop lingui:compile
       - run: pnpm -F ui build
+      - name: Use stable Tauri config
+        run: |
+          cp apps/desktop/src-tauri/tauri.conf.stable.json apps/desktop/src-tauri/tauri.conf.json
       - name: Build (release/unsigned)
-        run: pnpm -F desktop tauri build --target ${{ matrix.target }} --config ${{ env.TAURI_CONF_PATH }} --verbose
+        run: pnpm -F desktop tauri build --target ${{ matrix.target }} --verbose
         env:
           # https://github.com/tauri-apps/tauri-action/issues/740
           CI: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HYPR_DISABLE_NSPANEL: "1"
       - name: Collect build outputs
         shell: bash
         working-directory: ./apps/desktop/src-tauri
