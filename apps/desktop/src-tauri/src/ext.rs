@@ -14,17 +14,7 @@ pub trait AppExt<R: tauri::Runtime> {
 
 impl<R: tauri::Runtime, T: tauri::Manager<R>> AppExt<R> for T {
     fn sentry_dsn(&self) -> String {
-        {
-            #[cfg(not(debug_assertions))]
-            {
-                env!("SENTRY_DSN").to_string()
-            }
-
-            #[cfg(debug_assertions)]
-            {
-                option_env!("SENTRY_DSN").unwrap_or_default().to_string()
-            }
-        }
+        option_env!("SENTRY_DSN").unwrap_or_default().to_string()
     }
 
     #[tracing::instrument(skip_all)]

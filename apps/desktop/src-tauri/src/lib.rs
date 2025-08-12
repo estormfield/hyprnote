@@ -29,15 +29,7 @@ pub async fn main() {
 
     let sentry_client = tauri_plugin_sentry::sentry::init((
         {
-            #[cfg(not(debug_assertions))]
-            {
-                env!("SENTRY_DSN")
-            }
-
-            #[cfg(debug_assertions)]
-            {
-                option_env!("SENTRY_DSN").unwrap_or_default()
-            }
+            option_env!("SENTRY_DSN").unwrap_or_default()
         },
         tauri_plugin_sentry::sentry::ClientOptions {
             release: tauri_plugin_sentry::sentry::release_name!(),
@@ -105,23 +97,10 @@ pub async fn main() {
 
     {
         // These are not secrets. In prod, we set different values in the environment. (See .github/workflows/desktop_cd.yml)
-        let (keygen_account_id, keygen_verify_key) = {
-            #[cfg(not(debug_assertions))]
-            {
-                (env!("KEYGEN_ACCOUNT_ID"), env!("KEYGEN_VERIFY_KEY"))
-            }
-
-            #[cfg(debug_assertions)]
-            {
-                (
-                    option_env!("KEYGEN_ACCOUNT_ID")
-                        .unwrap_or("76dfe152-397c-4689-9c5e-3669cefa34b9"),
-                    option_env!("KEYGEN_VERIFY_KEY").unwrap_or(
-                        "13f18c98b8c1e5539d92df4aad2d51f4d203d5aead296215df7c3d6376b78b13",
-                    ),
-                )
-            }
-        };
+        let (keygen_account_id, keygen_verify_key) = (
+            option_env!("KEYGEN_ACCOUNT_ID").unwrap_or(""),
+            option_env!("KEYGEN_VERIFY_KEY").unwrap_or(""),
+        );
 
         builder = builder.plugin(
             tauri_plugin_keygen::Builder::new(keygen_account_id, keygen_verify_key).build(),
