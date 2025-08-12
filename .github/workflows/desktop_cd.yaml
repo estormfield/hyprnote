@@ -72,8 +72,8 @@ jobs:
       - run: poetry run python scripts/pre_build.py
       - run: pnpm -F desktop lingui:compile
       - run: pnpm -F ui build
-      - name: Build (dev/unsigned)
-        run: pnpm -F desktop tauri build --target ${{ matrix.target }} --config ${{ env.TAURI_CONF_PATH }} --verbose --debug
+      - name: Build (release/unsigned)
+        run: pnpm -F desktop tauri build --target ${{ matrix.target }} --config ${{ env.TAURI_CONF_PATH }} --verbose
         env:
           # https://github.com/tauri-apps/tauri-action/issues/740
           CI: false
@@ -97,9 +97,9 @@ jobs:
           find target/${{ matrix.target }} -type f -path "*/bundle/*" -print || true
       - uses: actions/upload-artifact@v4
         with:
-          name: hyprnote-dev-${{ matrix.target }}
+          name: hyprnote-release-${{ matrix.target }}
           path: |
-            apps/desktop/src-tauri/target/${{ matrix.target }}/**/bundle/dmg/*.dmg
-            apps/desktop/src-tauri/target/${{ matrix.target }}/**/bundle/macos/*.app
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 1
